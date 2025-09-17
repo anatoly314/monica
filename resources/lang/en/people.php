@@ -198,6 +198,7 @@ return [
     'reminders_update_success' => 'The reminder has been updated successfully',
     'reminders_add_optional_comment' => 'Optional comment',
     'reminders_add_pattern' => 'Remind me on a specific pattern',
+    'reminders_pattern' => 'Custom pattern',
     'reminders_pattern_type' => 'Pattern type',
     'reminders_pattern_nth_weekday_month' => 'Specific weekday of every month',
     'reminders_pattern_nth_weekday_year' => 'Specific weekday of a specific month',

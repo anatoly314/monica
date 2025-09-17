@@ -38,7 +38,9 @@
         </div>
 
         <div class="table-cell frequency-type">
-          @if ($reminder->frequency_type != 'one_time')
+          @if ($reminder->frequency_type == 'pattern')
+            {{ trans('people.reminders_pattern') }}
+          @elseif ($reminder->frequency_type != 'one_time')
             {{ trans_choice('people.reminder_frequency_'.$reminder->frequency_type, $reminder->frequency_number, ['number' => $reminder->frequency_number]) }}
           @else
             {{ trans('people.reminders_one_time') }}

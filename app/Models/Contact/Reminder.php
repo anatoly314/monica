@@ -244,12 +244,6 @@ class Reminder extends Model
         // Start from the specified month of current year
         $targetDate = $date->copy()->month($this->pattern_month)->startOfMonth();
 
-        // If we're past this year's occurrence, move to next year
-        if ($targetDate->month < $date->month ||
-            ($targetDate->month == $date->month && $targetDate->day <= $date->day)) {
-            $targetDate->addYear();
-        }
-
         // Find first occurrence of the target weekday in the month
         while ($targetDate->dayOfWeek != $this->pattern_day_of_week) {
             $targetDate->addDay();
@@ -264,6 +258,11 @@ class Reminder extends Model
             while ($targetDate->dayOfWeek != $this->pattern_day_of_week) {
                 $targetDate->subDay();
             }
+        }
+
+        // If we're past this year's occurrence, move to next year
+        if ($targetDate->lte($date)) {
+            $targetDate->addYear();
         }
 
         return $targetDate;
