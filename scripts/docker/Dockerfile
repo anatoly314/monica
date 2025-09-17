@@ -6,7 +6,7 @@
 ### This file is based off of the `apache` variant in the above mentioned repo
 ###
 
-FROM php:8.1-apache
+FROM php:8.2-apache
 
 # opencontainers annotations https://github.com/opencontainers/image-spec/blob/master/annotations.md
 LABEL org.opencontainers.image.authors="Alexis Saettler <alexis@saettler.org>" \
@@ -25,10 +25,8 @@ RUN set -ex; \
     ; \
     rm -rf /var/lib/apt/lists/*
 
-# Install required PHP extensions
+# Install required PHP extensions and runtime libraries
 RUN set -ex; \
-    \
-    savedAptMark="$(apt-mark showmanual)"; \
     \
     apt-get update; \
     apt-get install -y --no-install-recommends \
@@ -72,18 +70,7 @@ RUN set -ex; \
         redis \
     ; \
     \
-# reset apt-mark's "manual" list so that "purge --auto-remove" will remove all build dependencies
-    apt-mark auto '.*' > /dev/null; \
-    apt-mark manual $savedAptMark; \
-        ldd "$(php -r 'echo ini_get("extension_dir");')"/*.so \
-        | awk '/=>/ { print $3 }' \
-        | sort -u \
-        | xargs -r dpkg-query -S \
-        | cut -d: -f1 \
-        | sort -u \
-        | xargs -rt apt-mark manual; \
-        \
-    apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false; \
+# Keep the dependencies - don't clean them up
     rm -rf /var/lib/apt/lists/*
 
 # Set crontab for schedules
@@ -164,7 +151,7 @@ RUN set -ex; \
 # Install node dependencies
 RUN set -ex; \
     \
-    curl -fsSL https://deb.nodesource.com/setup_18.x | bash -; \
+    curl -fsSL https://deb.nodesource.com/setup_20.x | bash -; \
     apt-get install -y nodejs; \
     npm install -g yarn; \
     yarn run inst; \
