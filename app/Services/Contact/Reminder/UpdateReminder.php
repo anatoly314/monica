@@ -25,10 +25,19 @@ class UpdateReminder extends BaseService
                 'required',
                 Rule::in(Reminder::$frequencyTypes),
             ],
-            'frequency_number' => 'nullable|integer',
+            'frequency_number' => 'required_unless:frequency_type,pattern|nullable|integer',
             'title' => 'required|string|max:100000',
             'description' => 'nullable|max:1000000',
             'delible' => 'nullable|boolean',
+            // Pattern-specific validation rules
+            'pattern_type' => [
+                'required_if:frequency_type,pattern',
+                'nullable',
+                Rule::in(Reminder::$patternTypes),
+            ],
+            'pattern_day_of_week' => 'required_if:frequency_type,pattern|nullable|integer|between:0,6',
+            'pattern_week_number' => 'required_if:frequency_type,pattern|nullable|integer|between:-1,4',
+            'pattern_month' => 'nullable|integer|between:1,12',
         ];
     }
 
@@ -57,8 +66,13 @@ class UpdateReminder extends BaseService
             'description' => $this->nullOrValue($data, 'description'),
             'initial_date' => $data['initial_date'],
             'frequency_type' => $data['frequency_type'],
-            'frequency_number' => $this->nullOrValue($data, 'frequency_number'),
+            'frequency_number' => $data['frequency_type'] !== 'pattern' ? $this->nullOrValue($data, 'frequency_number') : null,
             'delible' => (isset($data['delible']) ? $data['delible'] : true),
+            // Pattern fields
+            'pattern_type' => $this->nullOrValue($data, 'pattern_type'),
+            'pattern_day_of_week' => $this->nullOrValue($data, 'pattern_day_of_week'),
+            'pattern_week_number' => $this->nullOrValue($data, 'pattern_week_number'),
+            'pattern_month' => $this->nullOrValue($data, 'pattern_month'),
         ]);
 
         foreach ($reminder->account->users as $user) {

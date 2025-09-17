@@ -51,6 +51,14 @@ class RemindersController extends Controller
             'description' => $request->input('description'),
         ];
 
+        // Add pattern fields if frequency_type is 'pattern'
+        if ($frequency_type === 'pattern') {
+            $data['pattern_type'] = $request->input('pattern_type');
+            $data['pattern_day_of_week'] = $request->input('pattern_day_of_week');
+            $data['pattern_week_number'] = $request->input('pattern_week_number');
+            $data['pattern_month'] = $request->input('pattern_month');
+        }
+
         app(CreateReminder::class)->execute($data);
 
         return redirect()->route('people.show', $contact)
@@ -97,6 +105,14 @@ class RemindersController extends Controller
             'title' => $request->input('title'),
             'description' => $request->input('description'),
         ];
+
+        // Add pattern fields if frequency_type is 'pattern'
+        if ($frequency_type === 'pattern') {
+            $data['pattern_type'] = $request->input('pattern_type');
+            $data['pattern_day_of_week'] = $request->input('pattern_day_of_week');
+            $data['pattern_week_number'] = $request->input('pattern_week_number');
+            $data['pattern_month'] = $request->input('pattern_month');
+        }
 
         app(UpdateReminder::class)->execute($data);
 

@@ -326,6 +326,8 @@ common.loadLanguage(window.Laravel.locale, true).then((i18n) => {
       timezone: window.Laravel.timezone,
       locale: i18n.locale,
       reminders_frequency: 'once',
+      frequencyType: 'one_time',
+      patternType: 'nth_weekday_of_month',
       accept_invite_user: false,
       date_met_the_contact: 'known',
       global_relationship_form_new_contact: true,

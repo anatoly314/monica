@@ -40,6 +40,9 @@ class Reminder extends Model
         'delible' => 'boolean',
         'inactive' => 'boolean',
         'initial_date' => 'date:Y-m-d',
+        'pattern_day_of_week' => 'integer',
+        'pattern_week_number' => 'integer',
+        'pattern_month' => 'integer',
     ];
 
     /**
@@ -48,7 +51,18 @@ class Reminder extends Model
      * @var array
      */
     public static $frequencyTypes = [
-        'one_time', 'week', 'month', 'year',
+        'one_time', 'week', 'month', 'year', 'pattern',
+    ];
+
+    /**
+     * Valid pattern types for advanced reminder scheduling.
+     *
+     * @var array
+     */
+    public static $patternTypes = [
+        'nth_weekday_of_month',  // e.g., "3rd Monday of every month"
+        'nth_weekday_of_year',   // e.g., "3rd Monday of October"
+        'last_weekday_of_month', // e.g., "Last Friday of every month"
     ];
 
     /**
@@ -110,6 +124,10 @@ class Reminder extends Model
      */
     public function calculateNextExpectedDate($date = null)
     {
+        if ($this->frequency_type === 'pattern' && $this->pattern_type) {
+            return $this->calculatePatternDate($date);
+        }
+
         if (is_null($date)) {
             $date = $this->initial_date;
         }
@@ -137,6 +155,118 @@ class Reminder extends Model
                     DateHelper::getTimezone() ?? config('app.timezone'));
 
         return $this->calculateNextExpectedDate($date);
+    }
+
+    /**
+     * Calculate next date for pattern-based reminder.
+     *
+     * @param  Carbon|null  $fromDate
+     * @return Carbon
+     */
+    public function calculatePatternDate($fromDate = null)
+    {
+        if (!$fromDate) {
+            $fromDate = now();
+        }
+
+        switch ($this->pattern_type) {
+            case 'nth_weekday_of_month':
+                return $this->getNthWeekdayOfMonth($fromDate);
+            case 'nth_weekday_of_year':
+                return $this->getNthWeekdayOfYear($fromDate);
+            case 'last_weekday_of_month':
+                return $this->getLastWeekdayOfMonth($fromDate);
+            default:
+                return $fromDate;
+        }
+    }
+
+    /**
+     * Get the nth weekday of the month.
+     *
+     * @param  Carbon  $date
+     * @return Carbon
+     */
+    private function getNthWeekdayOfMonth(Carbon $date)
+    {
+        $targetDate = $date->copy()->startOfMonth();
+
+        // Find first occurrence of the target weekday
+        while ($targetDate->dayOfWeek != $this->pattern_day_of_week) {
+            $targetDate->addDay();
+        }
+
+        // Add weeks to get to nth occurrence
+        if ($this->pattern_week_number > 0) {
+            $targetDate->addWeeks($this->pattern_week_number - 1);
+        }
+
+        // If the calculated date doesn't exist in this month (e.g., 5th Monday)
+        // or if it's in the past, move to next month
+        if ($targetDate->month != $date->month || $targetDate->lte($date)) {
+            return $this->getNthWeekdayOfMonth($date->copy()->addMonth()->startOfMonth());
+        }
+
+        return $targetDate;
+    }
+
+    /**
+     * Get the last weekday of the month.
+     *
+     * @param  Carbon  $date
+     * @return Carbon
+     */
+    private function getLastWeekdayOfMonth(Carbon $date)
+    {
+        $targetDate = $date->copy()->endOfMonth()->startOfDay();
+
+        // Find last occurrence of the target weekday
+        while ($targetDate->dayOfWeek != $this->pattern_day_of_week) {
+            $targetDate->subDay();
+        }
+
+        // If date is in past, move to next month
+        if ($targetDate->lte($date)) {
+            return $this->getLastWeekdayOfMonth($date->copy()->addMonth());
+        }
+
+        return $targetDate;
+    }
+
+    /**
+     * Get the nth weekday of a specific month in the year.
+     *
+     * @param  Carbon  $date
+     * @return Carbon
+     */
+    private function getNthWeekdayOfYear(Carbon $date)
+    {
+        // Start from the specified month of current year
+        $targetDate = $date->copy()->month($this->pattern_month)->startOfMonth();
+
+        // If we're past this year's occurrence, move to next year
+        if ($targetDate->month < $date->month ||
+            ($targetDate->month == $date->month && $targetDate->day <= $date->day)) {
+            $targetDate->addYear();
+        }
+
+        // Find first occurrence of the target weekday in the month
+        while ($targetDate->dayOfWeek != $this->pattern_day_of_week) {
+            $targetDate->addDay();
+        }
+
+        // Add weeks to get to nth occurrence
+        if ($this->pattern_week_number > 0) {
+            $targetDate->addWeeks($this->pattern_week_number - 1);
+        } elseif ($this->pattern_week_number == -1) {
+            // For last occurrence, start from end of month
+            $targetDate = $targetDate->copy()->endOfMonth()->startOfDay();
+            while ($targetDate->dayOfWeek != $this->pattern_day_of_week) {
+                $targetDate->subDay();
+            }
+        }
+
+        return $targetDate;
     }
 
     /**

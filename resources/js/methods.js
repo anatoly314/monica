@@ -19,5 +19,13 @@ export default {
   fixAvatarDisplay(event) {
     event.srcElement.classList = ['hidden'];
     event.srcElement.nextElementSibling.classList.remove('hidden');
+  },
+
+  /**
+   * Update pattern visibility based on pattern type selection.
+   */
+  updatePatternVisibility() {
+    // This method is called when pattern type changes
+    // The visibility is handled by Vue's v-show directives
   }
 };
