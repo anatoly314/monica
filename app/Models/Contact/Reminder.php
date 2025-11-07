@@ -125,7 +125,9 @@ class Reminder extends Model
     public function calculateNextExpectedDate($date = null)
     {
         if ($this->frequency_type === 'pattern' && $this->pattern_type) {
-            return $this->calculatePatternDate($date);
+            // For pattern reminders, always calculate from current date/time
+            // to ensure proper recalculation after each occurrence
+            return $this->calculatePatternDate(null);
         }
 
         if (is_null($date)) {
