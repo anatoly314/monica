@@ -7,6 +7,7 @@ on:
       - 4.x
       - 4.x-pattern-reminders-fix
       - claude/fix-pattern-reminders-011CUu7ey26M5gxK8qpdbZf8
+      - claude/4.x-pattern-reminders-fix-011CUu7ey26M5gxK8qpdbZf8
     tags:
       - 'v*'
   workflow_dispatch:
